@@ -158,43 +158,59 @@ namespace FlickrSuperSyncConsole
         private static void QueueAlbum(string photoSetID, string title)
         {
             int page = 0;
+            string sql = "";
+            List<FlickrNet.Photo> finalPhotos = new List<FlickrNet.Photo>();
 
-            var photos = GetPhotos(page, photoSetID);
-
-            while (photos.Count > 0)
+            if (!String.IsNullOrEmpty(photoSetID))
             {
-                Logger.Info(String.Concat("Queuing page ", page));
                 using (var con = DBHelper.GetConnection())
                 {
-                    con.Open();
+                    sql = string.Format("insert into Album (PhotoSetID,Title) Values('{0}', '{1}')");
 
-                    string sql = "";
-
-                    if (!String.IsNullOrEmpty(photoSetID))
+                    using (var command = new SQLiteCommand(sql, con))
                     {
-                        sql = string.Format("insert into Album (PhotoSetID,Title) Values('{0}', '{1}')");
-
-                        using (var command = new SQLiteCommand(sql, con))
-                        {
-                            command.ExecuteNonQuery();
-                        }
-                    }
-
-                    foreach (var photo in photos)
-                    {
-                        sql = String.Format(
-                            "insert into Photo (photoSetID,PhotoId,OriginalUrl,Title) Values ('{0}','{1}','{2}','{3}')",
-                            photoSetID ?? "",photo.PhotoId,photo.OriginalUrl,photo.Title);
-
-                        using (var command = new SQLiteCommand(sql, con))
-                        {
-                            command.ExecuteNonQuery();
-                        }
+                        command.ExecuteNonQuery();
                     }
                 }
-  
+            }
+
+            var photos = GetPhotos(page, photoSetID);
+            finalPhotos.AddRange(photos);
+
+            while (photos.Count == 500)
+            {
+                Logger.Info(String.Concat("Getting photos info, page:", page));
+
                 page++;
                 photos = GetPhotos(page, photoSetID);
+
+                finalPhotos.AddRange(photos);
+            }
+
+            int checkPointValue = 1000;
+            int count = 1;
+            using (var con = DBHelper.GetConnection())
+            {
+                con.Open();
+
+                foreach (var photo in finalPhotos)
+                {
+                    if (count % checkPointValue == 0)
+                    {
+                        Logger.Info(String.Format("Queuwing photos, {0} of {1}", count, finalPhotos.Count));
+                    }
+
+                    sql = String.Format(
+                        "insert into Photo (photoSetID,PhotoId,OriginalUrl,Title) Values ('{0}','{1}','{2}','{3}')",
+                        photoSetID ?? "", photo.PhotoId, photo.OriginalUrl, photo.Title);
+
+                    using (var command = new SQLiteCommand(sql, con))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+
+                    count++;
+                }
             }
         }
 
@@ -327,15 +343,37 @@ namespace FlickrSuperSyncConsole
         private static PagedPhotoCollection GetPhotos(int page, string photoSetID = null)
         {
             int itemsPerPage = 500;
+            int maxTries = 10;
+            int tries = 0;
 
             PagedPhotoCollection photos = null;
-            if (string.IsNullOrEmpty(photoSetID))
+            Exception lastError = null;
+
+            while (tries <= maxTries)
             {
-                photos = Flickr.PeopleGetPhotos(page: page, perPage: itemsPerPage, extras: PhotoSearchExtras.OriginalFormat);
+                try
+                {
+                    if (string.IsNullOrEmpty(photoSetID))
+                    {
+                        photos = Flickr.PeopleGetPhotos(page: page, perPage: itemsPerPage, extras: PhotoSearchExtras.OriginalFormat);
+                    }
+                    else
+                    {
+                        photos = Flickr.PhotosetsGetPhotos(photosetId: photoSetID, page: page, perPage: itemsPerPage, extras: PhotoSearchExtras.OriginalFormat);
+                    }
+
+                    break;
+                }
+                catch(Exception e)
+                {
+                    lastError = e;
+                    tries++;
+                }
             }
-            else
+
+            if(tries> maxTries)
             {
-                photos = Flickr.PhotosetsGetPhotos(photosetId: photoSetID, page: page, perPage: itemsPerPage, extras: PhotoSearchExtras.OriginalFormat);
+                throw lastError;
             }
 
             return photos;

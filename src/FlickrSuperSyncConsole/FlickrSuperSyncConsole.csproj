@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C4546B8D-A72E-4E92-BF9F-757A931D4548}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>FlickrSyncConsole</RootNamespace>
-    <AssemblyName>FlickrSyncConsole</AssemblyName>
+    <RootNamespace>FlickrSuperSyncConsole</RootNamespace>
+    <AssemblyName>FlickrSuperSyncConsole</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
