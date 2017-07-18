@@ -1,0 +1,66 @@
+#####For visual studio
+#ignore thumbnails created by windows
+Thumbs.db
+#Ignore files build by Visual Studio
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.bak
+*.cache
+*.ilk
+*.log
+[Bb]in
+[Dd]ebug*/
+*.sbr
+obj/
+[Rr]elease*/
+_ReSharper*/
+#Pagages from NUGet
+packages
+!packages/repositories.config
+#Dlls
+*.dll
+#Setup project
+**/Express/
+*.coverage
+
+#####For android studio
+#built application files
+*.apk
+*.ap_
+# files for the dex VM
+*.dex
+# Java class files
+*.class
+# generated files
+bin/
+gen/
+# OSX files
+.DS_Store
+# Eclipse project files
+.classpath
+.project
+build/
+
+#Optional - for older project format, add this section to your gitignore file:
+/*/out
+/*/*/build
+/*/*/production
+*.iws
+*.ipr
+*~
+*.swp
+
+#TVIndoor specifics
+**/TVIndoor/Files
+Logs
+*.bin
+*_log.ldf
+cache*
+workspace.xml
+*.coverage
